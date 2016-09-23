@@ -138,7 +138,9 @@ object UqbarProject extends AutoPlugin {
 			releaseProcess := Seq(
 				checkUnstagedAndUntracked,
 				process("git pull", _: State),
+				{ st: State => st.log.success(s"HERE!!!!"); st },
 				confirmVersion,
+				{ st: State => st.log.success(s"HERE2!!!!"); st },
 				runClean,
 				runTest,
 				tagRelease,
