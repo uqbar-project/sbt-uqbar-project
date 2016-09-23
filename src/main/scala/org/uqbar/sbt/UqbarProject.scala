@@ -1,5 +1,6 @@
 package org.uqbar.sbt
 
+import scala.util.Try
 import scala.util.matching.Regex
 
 import com.typesafe.sbt.GitPlugin
@@ -51,7 +52,6 @@ import sbtrelease.ReleaseStateTransformations.runClean
 import sbtrelease.ReleaseStateTransformations.runTest
 import sbtrelease.ReleaseStateTransformations.tagRelease
 import sbtrelease.Version
-import sbtrelease.versionFormatError
 
 object UqbarProject extends AutoPlugin {
 
@@ -125,22 +125,20 @@ object UqbarProject extends AutoPlugin {
 			changelogPattern := "![ \t]*(.*)".r,
 
 			changelog := {
-				val lastTag = Process("git describe --tags --abbrev=0").lines.headOption
+				val lastTag = Process("git describe --tags --abbrev=0 --always").lines.headOption
 				val changeWindow = lastTag.fold("HEAD"){ _ + "..HEAD" }
 				Process(s"git log --pretty=%B $changeWindow").lines.flatMap(changelogPattern.value.unapplySeq).flatten
 			},
 
 			releaseTagComment <<= (releaseTagName, changelog) map { (tagName, changelog) =>
-				val entries = if(changelog.nonEmpty) changelog map { "- " + _ } mkString "\n" else ""
+				val entries = if (changelog.nonEmpty) changelog map { "- " + _ } mkString "\n" else ""
 				s"$tagName\n\n$entries"
 			},
 
 			releaseProcess := Seq(
 				checkUnstagedAndUntracked,
 				process("git pull", _: State),
-				{ st: State => st.log.success(s"HERE!!!!"); st },
 				confirmVersion,
-				{ st: State => st.log.success(s"HERE2!!!!"); st },
 				runClean,
 				runTest,
 				tagRelease,
@@ -165,12 +163,12 @@ object UqbarProject extends AutoPlugin {
 	}
 
 	private lazy val confirmVersion = { st: State =>
-		val currentVersion = Version(Process("git describe").!!.drop(1).trim).getOrElse(versionFormatError)
-		val suggestedReleaseVersion = currentVersion.withoutQualifier.bumpBugfix
+		val currentVersion = Try{ Process("git describe").!! }.toOption.flatMap{ txt => Version(txt.drop(1).trim) }
+		val suggestedReleaseVersion = currentVersion.map{ _.withoutQualifier.bumpBugfix }
 
-		println(s"Current version: ${currentVersion.string}")
+		println(s"Current version: ${currentVersion.fold("-")(_.string)}")
 		val releaseVersion = readVersion(
-			suggestedReleaseVersion.string,
+			suggestedReleaseVersion.fold("0.0.1"){ _.string },
 			s"Release version [%s] : ",
 			st.get(useDefaults).getOrElse(false),
 			st.get(commandLineReleaseVersion).flatten
