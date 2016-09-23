@@ -15,6 +15,7 @@ import sbt.Developer
 import sbt.Keys.developers
 import sbt.Keys.homepage
 import sbt.Keys.isSnapshot
+import sbt.Keys.libraryDependencies
 import sbt.Keys.licenses
 import sbt.Keys.organization
 import sbt.Keys.organizationHomepage
@@ -24,21 +25,25 @@ import sbt.Keys.scalacOptions
 import sbt.Keys.scmInfo
 import sbt.Keys.unmanagedSourceDirectories
 import sbt.Keys.version
-import sbt._
+import sbt.Process
 import sbt.Project
 import sbt.ScmInfo
+import sbt.Scoped.t2ToTable2
 import sbt.State
 import sbt.State.stateOps
 import sbt.Test
+import sbt.moduleIDConfigurable
 import sbt.settingKey
+import sbt.taskKey
+import sbt.toGroupID
 import sbt.url
 import sbtrelease.ReleasePlugin
 import sbtrelease.ReleasePlugin.autoImport.ReleaseKeys.commandLineReleaseVersion
 import sbtrelease.ReleasePlugin.autoImport.ReleaseKeys.useDefaults
 import sbtrelease.ReleasePlugin.autoImport.releaseIgnoreUntrackedFiles
 import sbtrelease.ReleasePlugin.autoImport.releaseProcess
-import sbtrelease.ReleasePlugin.autoImport.releaseTagName
 import sbtrelease.ReleasePlugin.autoImport.releaseTagComment
+import sbtrelease.ReleasePlugin.autoImport.releaseTagName
 import sbtrelease.ReleasePlugin.autoImport.releaseVcs
 import sbtrelease.ReleaseStateTransformations.readVersion
 import sbtrelease.ReleaseStateTransformations.reapply
@@ -51,27 +56,27 @@ import sbtrelease.versionFormatError
 object UqbarProject extends AutoPlugin {
 
 	override def trigger = allRequirements
-	
+
 	override def requires = ReleasePlugin && GitPlugin
 
 	object autoImport {
 		lazy val changelogPattern = settingKey[Regex]("Pattern used to identify changelog entries on git commit comments")
-		lazy val changelog = taskKey[List[String]]("Changelog entries since last release")
+		lazy val changelog = taskKey[Stream[String]]("Changelog entries since last release")
 	}
 
 	import autoImport._
 
 	override lazy val projectSettings = {
-		
+
 		val uqbarHomepage = url("http://www.uqbar.org")
 
 		versionWithGit ++ Seq(
-				
+
 			//─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 			// General
 			//─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-		
-				organization := "org.uqbar",
+
+			organization := "org.uqbar",
 			organizationName := "Uqbar Foundation",
 			organizationHomepage := Some(uqbarHomepage),
 			homepage := Some(uqbarHomepage),
@@ -89,6 +94,12 @@ object UqbarProject extends AutoPlugin {
 						)
 				}.headOption
 			},
+
+			//─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+			// Dependencies
+			//─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+			libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test",
 
 			//─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 			// Compilation
@@ -116,11 +127,12 @@ object UqbarProject extends AutoPlugin {
 			changelog := {
 				val lastTag = Process("git describe --tags --abbrev=0").lines.headOption
 				val changeWindow = lastTag.fold("HEAD"){ _ + "..HEAD" }
-				Process(s"git log --pretty=%B $changeWindow").lines.flatMap(changelogPattern.value.unapplySeq).flatten.toList
+				Process(s"git log --pretty=%B $changeWindow").lines.flatMap(changelogPattern.value.unapplySeq).flatten
 			},
 
 			releaseTagComment <<= (releaseTagName, changelog) map { (tagName, changelog) =>
-				s"$tagName\n\n${changelog map {"- " + _} mkString "\n"}"
+				val entries = if(changelog.nonEmpty) changelog map { "- " + _ } mkString "\n" else ""
+				s"$tagName\n\n$entries"
 			},
 
 			releaseProcess := Seq(
@@ -135,7 +147,6 @@ object UqbarProject extends AutoPlugin {
 				process("sonatypeReleaseAll", _: State),
 				{ st: State => st.log.success(s"Released as ${Project.extract(st).get(version)}"); st }
 			)
-
 		)
 	}
 
