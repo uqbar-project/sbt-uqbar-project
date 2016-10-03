@@ -2,6 +2,9 @@
 
 This *SBT* plugin containing common definitions and release workflow for Uqbar's sbt projects.
 
+## Requirements
+
+- SBT 0.12.10+ (previous versions of sbt have issues converting from sbt.url to java.net.URL type)
 
 ##Setup
 
