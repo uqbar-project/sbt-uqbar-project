@@ -1,4 +1,4 @@
-#﻿SBT: Uqbar Project
+# SBT: Uqbar Project
 
 This *SBT* plugin containing common definitions and release workflow for Uqbar's sbt projects.
 
@@ -6,7 +6,7 @@ This *SBT* plugin containing common definitions and release workflow for Uqbar's
 
 - SBT 0.12.10+ (previous versions of sbt have issues converting from sbt.url to java.net.URL type)
 
-##Setup
+## Setup
 
 To include this plugin in your *SBT* build, just add the following line to your `project/plugins.sbt` file, or your
 global *SBT* configuration:
@@ -16,7 +16,7 @@ addSbtPlugin("org.uqbar" % "sbt-uqbar-project" % "latest.integration")
 ```
 
 
-##Definitions
+## Definitions
 
 This plugin provides the general settings for any standard *SBT* based Uqbar project. These settings include:
 
@@ -67,11 +67,11 @@ The release process will automatically deploy the generated artifacts to Uqbar's
 `credentials` and `pgpPassphrase` keys are properly set.
 
 
-##Contributions
+## Contributions
 
 Yes, please! Pull requests are always welcome, just try to keep it small and clean.
 
 
-##License
+## License
 
 This code is open source software licensed under the [LGPL v3 License](https://www.gnu.org/licenses/lgpl.html) by [The Uqbar Foundation](http://www.uqbar-project.org/). Feel free to use it accordingly.
