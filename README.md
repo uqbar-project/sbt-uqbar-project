@@ -1,4 +1,4 @@
-# ﻿SBT: Uqbar Project
+# SBT: Uqbar Project
 
 This *SBT* plugin containing common definitions and release workflow for Uqbar's sbt projects.
 
