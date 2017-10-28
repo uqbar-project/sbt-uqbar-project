@@ -99,7 +99,7 @@ object UqbarProject extends AutoPlugin {
 			// Dependencies
 			//─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-			libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test",
+			libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % "test",
 
 			//─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 			// Compilation

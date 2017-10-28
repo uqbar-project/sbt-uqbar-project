@@ -4,3 +4,4 @@ target/
 .settings
 .cache-main
 /bin/
+.idea
